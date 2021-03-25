@@ -11,17 +11,17 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
+import kotlin.reflect.KMutableProperty
 
 
 class MainActivity : AppCompatActivity(), SensorEventListener {
 
     var txtSensor: TextView? = null
     var imgView: ImageView? = null
-    var startWidth = 30
-    var startHeight = 30
 
-    var screenWidth: Int = 0
-    var screenHeight: Int = 0
+
+    val screenWidth: Int = 1000
+    val screenHeight: Int = 1000
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,10 +42,6 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         params.topMargin = 0
         params.bottomMargin = 0
         this.imgView!!.layoutParams = params
-        //
-        val view = findViewById<View>(R.id.img_tlo)
-        this.screenWidth = view.layoutParams.width
-        this.screenHeight = view.layoutParams.height
     }
 
     override fun onSensorChanged(event: SensorEvent) {
@@ -63,14 +59,15 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         linear_acceleration[2] = event.values[2] - gravity[2]
         //
         val params = this.imgView!!.layoutParams as ConstraintLayout.LayoutParams
-        params.rightMargin = params.rightMargin + (linear_acceleration[0] * 10).toInt()
-        params.topMargin = params.topMargin + (linear_acceleration[1] * 10).toInt()
+        moveDroid(linear_acceleration[0],params::rightMargin,params::leftMargin,this.screenWidth)
+        moveDroid(linear_acceleration[1],params::topMargin,params::bottomMargin,this.screenHeight)
+
         this.imgView!!.layoutParams = params
         //
 
         //
         this.txtSensor?.text = String.format(
-            "Gravity: %f, %f, %f, Acc: %f, %f, %f, Size: LM: %d, TM: %d, wymiary: %d x %d ",
+            "Gravity: %f, %f, %f, Acc: %f, %f, %f, Size: PM: %d, LM: %d, GM: %d, DM: %d, wymiary: %d x %d ",
             gravity[0],
             gravity[1],
             gravity[2],
@@ -78,10 +75,43 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
             linear_acceleration[1],
             linear_acceleration[2],
             params.rightMargin,
+            params.leftMargin,
             params.topMargin,
+            params.bottomMargin,
             this.screenHeight,this.screenWidth
         )
 
+    }
+
+    private fun moveDroid(fl: Float, marginOne: KMutableProperty<Int>, marginTwo: KMutableProperty<Int>, border : Int) {
+        val value = (fl * 10).toInt()
+        if(value>0) {//przesuwamy w lewo
+            //zwiększamy prawy margines
+            var newValRight = marginOne.getter.call() + value
+            if (newValRight > border) {
+                newValRight = border
+            }
+            marginOne.setter.call(newValRight)
+            //zmniejszamy lewy
+            var newValLeft = marginTwo.getter.call() + ((-1) * value)
+            if (newValLeft < 0) {
+                newValLeft = 0
+            }
+            marginTwo.setter.call(newValLeft)
+        }else{//przesuwamy w prawo
+            //zwiększamy lewy margines
+            var newValLeft = marginTwo.getter.call() + ((-1)*value)
+            if (newValLeft > border) {
+                newValLeft = border
+            }
+            marginTwo.setter.call(newValLeft)
+            //zmniejszamy prawy
+            var newValRight = marginOne.getter.call() + value
+            if (newValRight < 0) {
+                newValRight = 0
+            }
+            marginOne.setter.call(newValRight);
+        }
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
