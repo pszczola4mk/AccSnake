@@ -21,7 +21,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 
 
     val screenWidth: Int = 1000
-    val screenHeight: Int = 1000
+    val screenHeight: Int = 1400
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
